@@ -1,0 +1,64 @@
+#Project 1 Draft 1
+
+import cv2
+import OpenCV 
+import sys 
+import zmq 
+import matplotlib.pylab as pit #not used yet**
+import base64 # used for turning .jpg(s) or .jpeg(s) into strings. 
+import numpy # only used for multi-dimensional arrays. not used yet**
+
+
+#Main Goal: acquire images on one device and serve them via a network port over zeroMQ messaging library
+
+#Requirements for server (conventional client): 
+# 1) open the main camera interface
+# 2) provide zmq publish topic via port 8083
+# 3) publish images to topic
+
+#Requirements for client (conventional server) (modified from demo_program.py): 
+
+# 1) subscribe to server's topic
+# 2) display images received
+# 3) print out framerate
+
+#Notes:
+        #Base64 encoding necessary for ZeroMQ-- gives us strings to work with
+        #Sockets--> endpoint of dual communication connection --> bound to a port number, endpoints  are combos of ip address and port number.
+        #sys.argv is automatically a list of strings representing the arguments on the command line
+        #We want our program to use the 'Publish/Subscribe Pattern" for sockets (best represents the notion of what 'streaming' is)
+            #Question: Why can't we use 'Send/Receive' model for sockets for this example?
+
+#Open camera at ID 0
+vidcam = cv2.VideoCapture(0)
+    if not (vidcam.isOpened())
+    print("Video Camera Connection Issue")
+
+#note: need to set camera resolution / parameters of video capture
+
+#connecting to camera and port
+
+zmq.init(1)
+port = "8083"
+contextfunction = zmq.Context()
+socket = context.socket(zmq.REP) #blocks recv() unless it receives a request (ask about this)
+socket.bind("tcp://0.0.0.0:8083") #binds socket to endpoint
+
+#Server -- bound to port 8083 
+    #before opening .jpg, need to swap 'video capture elements' with .jpg ---> demo_display.py? Still need to do this.
+    #display program--> demo_display.py --> function from OpenCV library (OpenCV.demo_display())
+
+pict = open("experimentalimage.jpg",'rb') #rb--> binary format for reading
+bytes = bytearray(pict.read())
+imagestrng = base64.b64encode(bytes) #note --> zeroMQ uses C strings (found in a commentary). What changes does this have?
+socket.publish(imagestrng)   #saw comment that said use ( b'message' ) to make sure literal string messages remain bytes for using python3 with 0MQ.
+pict.close()
+
+#Client: connects to port 8083
+import base64
+recpict = socket.recv()
+pict = open("experimentalimage.jpg", 'wb') ##wb --> binary format for writing
+decodeimage = bytearray(base64.b64decode(recpict))
+pict.write(decodeimage)
+pict.close()
+print
